@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fairy Debugger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gray: { 900: '#111827', 800: '#1f2937', 700: '#374151', 600: '#4b5563', 400: '#9ca3af', 300: '#d1d5db' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        input,
+        textarea {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px #3b82f6;
+            outline: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+
+<body class="p-8 min-h-screen">
+    <div class="max-w-7xl mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">🧚
+                Fairy Debugger</h1>
+            <div class="flex items-center gap-4">
+                <select id="ai_provider"
+                    class="bg-gray-700 text-xs text-white rounded p-2 border border-gray-600 focus:border-purple-500 outline-none">
+                    <option value="local">🤖 Local (LM Studio)</option>
+                    <option value="gemini" selected>✨ Gemini 2.0 Flash</option>
+                </select>
+                <div id="statusBadge" class="px-3 py-1 rounded-full text-xs font-mono bg-gray-700 text-gray-400">Ready
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Col: Input -->
+            <div class="space-y-6">
+                <!-- Paste Row Feature -->
+                <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Paste Row
+                        (Tab-Separated)</label>
+                    <textarea id="paste_row" rows="2"
+                        class="w-full rounded-lg p-3 bg-gray-800 border border-gray-600 focus:border-purple-500 transition-colors text-xs"
+                        placeholder="Paste full row from Google Sheets here..."></textarea>
+                    <button onclick="parseRow()"
+                        class="mt-2 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded text-xs transition-colors">
+                        📋 Parse & Populate
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Competition
+                        ID</label>
+                    <input type="text" id="competition_id"
+                        class="w-full rounded-lg p-3 bg-gray-900 border border-gray-700 focus:border-purple-500 transition-colors"
+                        placeholder="smartphone-decimeter-2022">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Datarow
+                            ID</label>
+                        <input type="text" id="datarow_id"
+                            class="w-full rounded-lg p-3 bg-gray-900 border border-gray-700 focus:border-purple-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Debug
+                            Step</label>
+                        <input type="number" id="debug_step" value="0"
+                            class="w-full rounded-lg p-3 bg-gray-900 border border-gray-700 focus:border-purple-500 transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Code</label>
+                    <textarea id="code" rows="12"
+                        class="w-full rounded-lg p-3 bg-gray-900 border border-gray-700 focus:border-purple-500 transition-colors font-mono text-xs leading-relaxed"
+                        spellcheck="false"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Original Plan /
+                        Analysis</label>
+                    <textarea id="original_plan" rows="4"
+                        class="w-full rounded-lg p-3 bg-gray-900 border border-gray-700 focus:border-purple-500 transition-colors text-sm"></textarea>
+                </div>
+
+                <div class="flex gap-4">
+                    <button onclick="runSubmission()" id="runBtn"
+                        class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all shadow-lg">
+                        🚀 Run on GPU
+                    </button>
+                    <button onclick="analyzeOnly()" id="analyzeBtn"
+                        class="bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-500 transition-all shadow-lg text-xs flex items-center justify-center">
+                        🔍 Analyze Only
+                    </button>
+                    <button onclick="cancelSubmission()" id="cancelBtn" disabled
+                        class="bg-red-900 text-red-200 font-bold py-3 px-6 rounded-lg hover:bg-red-800 transition-all opacity-50 disabled:cursor-not-allowed">
+                        🛑 Stop
+                    </button>
+                    <button onclick="markNoRepro()" id="noReproBtn"
+                        class="bg-green-800 text-green-200 font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-all shadow-lg text-xs">
+                        ✅ No Repro (>6m)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Col: Output -->
+            <div class="space-y-6 flex flex-col">
+                <!-- Loader / Live Terminal -->
+                <div id="loader" class="hidden p-6 rounded-lg bg-gray-900 border border-purple-500/30 text-center">
+                    <div class="text-purple-400 font-mono animate-pulse mb-4 flex justify-between items-center">
+                        <span>Processing...</span>
+                        <span id="timer">0s</span>
+                    </div>
+
+                    <div class="text-left">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Live Terminal
+                            Output</label>
+                        <pre id="live_terminal"
+                            class="bg-black text-gray-300 p-3 rounded border border-gray-800 text-[10px] font-mono h-64 overflow-y-auto scrollbar-thin whitespace-pre-wrap"></pre>
+                    </div>
+                </div>
+
+                <div id="results" class="hidden space-y-6 flex-1 overflow-y-auto">
+                    <!-- Verification Grid -->
+                    <div class="grid grid-cols-5 gap-4">
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
+                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">bug_confirmed</div>
+                            <div id="val_confirmed" class="text-xl font-mono font-bold text-blue-400">-</div>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
+                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                proposed_debug_analysis_accurate</div>
+                            <div id="val_accurate" class="text-xl font-mono font-bold text-purple-400">-</div>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
+                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">initial_bug_reproducible
+                            </div>
+                            <div id="val_repro" class="text-xl font-mono font-bold text-cyan-400">-</div>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
+                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">bug_fixed</div>
+                            <div id="val_fixed" class="text-xl font-mono font-bold text-green-400">-</div>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
+                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">all_bugs_fixed</div>
+                            <div id="val_all_fixed" class="text-xl font-mono font-bold text-yellow-400">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Accuracy Explanation -->
+                    <div class="relative group">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Analysis Accuracy
+                            Explanation</label>
+                        <div id="res_accuracy_explanation"
+                            class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-sans h-24 overflow-y-auto">
+                        </div>
+                    </div>
+
+                    <!-- Analysis Box -->
+                    <div class="relative group">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">revised_analysis</label>
+                        <div id="res_analysis"
+                            class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-sans h-48 overflow-y-auto">
+                        </div>
+                        <button onclick="copyText('res_analysis')"
+                            class="absolute top-0 right-0 mt-8 mr-2 opacity-0 group-hover:opacity-100 bg-gray-700 text-xs px-2 py-1 rounded text-white transition-opacity">Copy</button>
+                    </div>
+
+                    <!-- Plan Box -->
+                    <div class="relative group">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">revised_plan</label>
+                        <div id="res_plan"
+                            class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-sans h-48 overflow-y-auto">
+                        </div>
+                        <button onclick="copyText('res_plan')"
+                            class="absolute top-0 right-0 mt-8 mr-2 opacity-0 group-hover:opacity-100 bg-gray-700 text-xs px-2 py-1 rounded text-white transition-opacity">Copy</button>
+                    </div>
+
+                    <!-- Fixed Code Box -->
+                    <div class="relative group">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">current_debug_code</label>
+                        <pre id="res_code"
+                            class="bg-black text-green-400 p-4 rounded-lg border border-gray-700 text-xs font-mono overflow-x-auto h-64 scrollbar-thin whitespace-pre-wrap"></pre>
+                        <div
+                            class="absolute top-0 right-0 mt-8 mr-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="copyText('res_code')"
+                                class="bg-gray-700 text-xs px-2 py-1 rounded text-white hover:bg-gray-600">Copy</button>
+                            <button onclick="applyFix()"
+                                class="bg-purple-600 text-xs px-2 py-1 rounded text-white font-bold hover:bg-purple-500 shadow-lg">⚡
+                                Apply & Advance</button>
+                        </div>
+                    </div>
+
+                    <!-- Log Box -->
+                    <div class="relative group flex-1">
+                        <label
+                            class="block text-xs font-bold text-gray-500 uppercase mb-2">output_logs_after_fix</label>
+                        <pre id="res_log"
+                            class="bg-black text-green-400 p-4 rounded-lg border border-gray-700 text-xs font-mono overflow-x-auto h-48 scrollbar-thin"></pre>
+                        <div
+                            class="absolute top-0 right-0 mt-8 mr-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="copyText('res_log')"
+                                class="bg-gray-700 text-xs px-2 py-1 rounded text-white transition-opacity">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let startTime;
+        let timerInterval;
+        let pollInterval;
+
+        async function runSubmission() {
+            const data = getFormData();
+
+            // Confirm before running
+            const competition = document.getElementById('competition_id').value;
+            const datarow = document.getElementById('datarow_id').value;
+            const step = document.getElementById('debug_step').value;
+            const filename = `${competition}_${datarow}_${step}.py`;
+
+            if (!confirm(`Are you sure you want to run step ${step}?\n\nThis will:\n1. Create/overwrite: ${filename}\n2. Submit to GPU cluster\n3. Start execution\n\nMake sure you've reviewed the code first!`)) {
+                return;
+            }
+
+            // Reset UI
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('runBtn').disabled = true;
+            document.getElementById('runBtn').classList.add('opacity-50');
+            document.getElementById('cancelBtn').disabled = false;
+            document.getElementById('cancelBtn').classList.remove('opacity-50');
+
+            document.getElementById('live_terminal').innerText = "Initializing...";
+
+            updateStatus("Initializing...", "bg-yellow-600");
+            startTimer();
+
+            try {
+                await fetch('/api/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                updateStatus("GPU Running...", "bg-blue-600");
+                pollStatus(data.datarow_id, data.debug_step, data);
+            } catch (e) {
+                alert("Error starting submission: " + e);
+                resetUI();
+            }
+        }
+
+        async function analyzeOnly() {
+            const data = getFormData();
+
+            // Reset UI
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('live_terminal').innerText = "Starting analysis on existing logs...";
+            updateStatus("Analyzing...", "bg-purple-600");
+            startTimer();
+
+            try {
+                // Trigger Analysis directly
+                const anaRes = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const anaJson = await anaRes.json();
+
+                renderResults(anaJson);
+            } catch (e) {
+                alert("Error starting analysis: " + e);
+                resetUI();
+            }
+        }
+
+        async function cancelSubmission() {
+            const datarow_id = document.getElementById('datarow_id').value;
+            const debug_step = document.getElementById('debug_step').value;
+
+            if (confirm("Are you sure you want to stop the GPU job?\n\nThis will:\n1. Cancel the local process\n2. Cancel the remote GPU job\n3. Verify cancellation succeeded")) {
+                try {
+                    const res = await fetch(`/api/cancel/${datarow_id}/${debug_step}`, { method: 'POST' });
+                    const json = await res.json();
+
+                    // Show detailed confirmation
+                    if (json.status === "success") {
+                        alert("✓ SUCCESS: " + json.message);
+                        resetUI();
+                        updateStatus("Cancelled", "bg-green-600");
+                    } else if (json.status === "warning") {
+                        alert("⚠ WARNING: " + json.message + "\n\nPlease verify the job was cancelled on the GPU server.");
+                        updateStatus("Cancellation Warning", "bg-yellow-600");
+                    } else {
+                        alert("✗ ERROR: " + (json.message || "Failed to cancel job"));
+                        updateStatus("Cancel Failed", "bg-red-600");
+                    }
+                } catch (e) {
+                    alert("Failed to cancel: " + e);
+                }
+            }
+        }
+
+        async function markNoRepro() {
+            const data = getFormData();
+
+            if (!confirm("Mark as No Repro (>6m)?\n\nThis will:\n1. Cancel any running job (with remote confirmation).\n2. Verify job cancellation succeeded.\n3. Skip future runs for this file.\n4. Generate 'Pass' values.")) return;
+
+            // Reset UI mainly to clear old results, but skip the full 'loader' flow since it's instant
+            document.getElementById('results').classList.add('hidden');
+            updateStatus("Marking No Repro...", "bg-green-600");
+
+            try {
+                const res = await fetch('/api/mark_no_repro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+
+                // Check if cancellation verification failed
+                if (json.status === "warning") {
+                    alert("⚠ WARNING: " + json.message + "\n\nCannot mark as No Repro until remote job is confirmed cancelled.");
+                    resetUI();
+                    updateStatus("Cancellation Required", "bg-yellow-600");
+                    return;
+                }
+
+                // Render the canned results
+                renderResults(json);
+
+                document.getElementById('res_log').innerText = "N/A (Job skipped/No Repro)";
+                updateStatus("No Repro Marked", "bg-green-600");
+
+            } catch (e) {
+                alert("Error marking no repro: " + e);
+                resetUI();
+            }
+        }
+
+        function getFormData() {
+            return {
+                competition_id: document.getElementById('competition_id').value,
+                datarow_id: document.getElementById('datarow_id').value,
+                debug_step: parseInt(document.getElementById('debug_step').value),
+                code: document.getElementById('code').value,
+                original_plan: document.getElementById('original_plan').value,
+                ai_provider: document.getElementById('ai_provider').value
+            };
+        }
+
+        async function pollStatus(datarow_id, debug_step, originalData) {
+            pollInterval = setInterval(async () => {
+                try {
+                    // Poll Logs
+                    const logRes = await fetch(`/api/logs/${datarow_id}/${debug_step}`);
+                    const logJson = await logRes.json();
+                    const terminal = document.getElementById('live_terminal');
+                    if (logJson.content) {
+                        terminal.innerText = logJson.content;
+                        terminal.scrollTop = terminal.scrollHeight;
+                    }
+
+                    // Poll Status
+                    const res = await fetch(`/api/status/${datarow_id}/${debug_step}`);
+                    const json = await res.json();
+
+                    if (json.status === 'completed') {
+                        clearInterval(pollInterval);
+                        updateStatus("Analyzing (LM Studio)...", "bg-purple-600");
+
+                        // Clean log display
+                        document.getElementById('res_log').innerText = JSON.stringify(json.data, null, 2);
+
+                        // Trigger Analysis
+                        const anaRes = await fetch('/api/analyze', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(originalData)
+                        });
+                        const anaJson = await anaRes.json();
+
+                        renderResults(anaJson);
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 2000);
+        }
+
+        async function renderResults(analysisData) {
+            stopTimer();
+            document.getElementById('loader').classList.add('hidden');
+
+            if (analysisData.status === 'error') {
+                alert("❌ Analysis Failed:\n\n" + analysisData.message);
+                updateStatus("Analysis Failed", "bg-red-600");
+                return;
+            }
+
+            document.getElementById('results').classList.remove('hidden');
+            updateStatus("Complete", "bg-green-600");
+            resetBtn();
+
+            // Load fixed code from analysis response (file is NOT created until user clicks "Run")
+            const competition_id = document.getElementById('competition_id').value;
+            const datarow_id = document.getElementById('datarow_id').value;
+            const debug_step = parseInt(document.getElementById('debug_step').value);
+            const next_step = debug_step + 1;
+
+            // Get fixed code from analysis JSON response
+            let fixedCode = null;
+            if (analysisData.analysis) {
+                let raw = analysisData.analysis;
+                // Clean markdown
+                raw = raw.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+
+                // Method 1: Strict JSON parsing
+                try {
+                    const jsonStart = raw.indexOf('{');
+                    const jsonEnd = raw.lastIndexOf('}') + 1;
+                    if (jsonStart !== -1 && jsonEnd > jsonStart) {
+                        const parsed = JSON.parse(raw.substring(jsonStart, jsonEnd));
+                        if (parsed.fixed_code) {
+                            fixedCode = parsed.fixed_code;
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Failed to parse fixed_code from analysis JSON", e);
+                }
+
+                // Method 2: Dirty extraction (if truncated/invalid JSON)
+                if (!fixedCode) {
+                    // Look for "fixed_code": "..." pattern
+                    const match = raw.match(/"fixed_code"\s*:\s*"([\s\S]*)/);
+                    if (match) {
+                        console.log("Attempting dirty extraction of fixed_code...");
+                        let content = match[1];
+
+                        // Try to find the end quote if it exists (and followed by , or } or whitespace)
+                        // This is hard because code can contain escaped quotes.
+                        // Assuming truncation implies we take everything until the end of string
+
+                        // Manually unescape JSON string
+                        // 1. Handle \\ -> \ (placeholder)
+                        // 2. Handle \" -> "
+                        // 3. Handle \n -> newline
+                        try {
+                            content = content.replace(/\\n/g, '\n')
+                                .replace(/\\"/g, '"')
+                                .replace(/\\\\/g, '\\')
+                                .replace(/\\t/g, '\t');
+
+                            fixedCode = content + "\n\n# [WARNING: Output was truncated/incomplete]";
+                        } catch (e) {
+                            console.warn("Dirty extraction unescape failed", e);
+                        }
+                    }
+                }
+            }
+
+            document.getElementById('res_code').innerText = fixedCode || "No fixed code generated yet";
+
+            if (analysisData.analysis) {
+                let raw = analysisData.analysis;
+
+                document.getElementById('res_analysis').innerText = raw;
+                document.getElementById('res_plan').innerText = "Check Analysis box above (Raw Output)";
+
+                try {
+                    // Remove markdown code blocks if present
+                    raw = raw.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+
+                    // Find JSON object
+                    const jsonStart = raw.indexOf('{');
+                    const jsonEnd = raw.lastIndexOf('}');
+                    if (jsonStart !== -1 && jsonEnd !== -1) {
+                        const jsonStr = raw.substring(jsonStart, jsonEnd + 1);
+                        const parsed = JSON.parse(jsonStr);
+
+                        document.getElementById('res_analysis').innerText = parsed.revised_analysis || "";
+                        document.getElementById('res_plan').innerText = parsed.revised_plan || "";
+
+                        // Populate all verification fields - use explicit checks to avoid "-" for missing values
+                        document.getElementById('val_accurate').innerText = parsed.proposed_debug_analysis_accurate !== undefined ? parsed.proposed_debug_analysis_accurate : "-";
+                        document.getElementById('val_confirmed').innerText = parsed.bug_confirmed !== undefined ? (parsed.bug_confirmed ? "TRUE" : "FALSE") : "-";
+                        document.getElementById('val_fixed').innerText = parsed.bug_fixed !== undefined ? (parsed.bug_fixed ? "TRUE" : "FALSE") : "-";
+                        document.getElementById('val_repro').innerText = parsed.initial_bug_reproducible !== undefined ? (parsed.initial_bug_reproducible ? "TRUE" : "FALSE") : "-";
+                        document.getElementById('val_all_fixed').innerText = parsed.all_bugs_fixed !== undefined ? (parsed.all_bugs_fixed ? "TRUE" : "FALSE") : "-";
+                        document.getElementById('res_accuracy_explanation').innerText = parsed.analysis_accuracy_explanation || "N/A";
+                    }
+                } catch (e) {
+                    console.warn("Failed to parse Gemini JSON", e);
+                }
+            }
+        }
+
+        function updateStatus(text, colorClass) {
+            const badge = document.getElementById('statusBadge');
+            badge.innerText = text;
+            badge.className = `px-3 py-1 rounded-full text-xs font-mono text-white ${colorClass}`;
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const seconds = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('timer').innerText = seconds + "s";
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            clearInterval(pollInterval);
+        }
+
+        function resetBtn() {
+            document.getElementById('runBtn').disabled = false;
+            document.getElementById('runBtn').classList.remove('opacity-50');
+            document.getElementById('cancelBtn').disabled = true;
+            document.getElementById('cancelBtn').classList.add('opacity-50');
+        }
+
+        function resetUI() {
+            stopTimer();
+            document.getElementById('loader').classList.add('hidden');
+            resetBtn();
+            updateStatus("Error", "bg-red-600");
+        }
+
+        function copyText(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text);
+            const el = document.getElementById(id).parentElement;
+            const originalBg = el.style.backgroundColor;
+            el.style.backgroundColor = "#374151";
+            setTimeout(() => { el.style.backgroundColor = originalBg; }, 200);
+        }
+
+        function parseRow() {
+            const raw = document.getElementById('paste_row').value.trim();
+            if (!raw) return;
+
+            // Split by tab
+            const parts = raw.split('\t');
+
+            // Mapping based on user provided sheet screenshot:
+            // Index 0 (Col A): datarow_id
+            // Index 1 (Col B): Aligner Email
+            // Index 2 (Col C): original_plan
+            // Index 3 (Col D): competition_id
+            // Index 4 (Col E): analysis
+            // Index 5 (Col F): code
+            // ...
+            // Index 16 (Col Q): debug_step (might be missing if user didn't copy that far)
+
+            if (parts.length >= 6) {
+                // We have at least up to Code
+
+                // Datarow ID (Col A / Index 0)
+                const datarowId = parts[0].trim();
+                if (datarowId) document.getElementById('datarow_id').value = datarowId;
+
+                // Original Plan (Col C / Index 2) + Analysis (Col E / Index 4) + Term Out (Col G / Index 6)
+                let combinedPlan = "";
+
+                // Original Plan
+                const plan = parts[2].trim();
+                if (plan) {
+                    combinedPlan += "[Original Plan]\n" + plan.replace(/^"|"$/g, '').replace(/""/g, '"') + "\n\n";
+                }
+
+                // Analysis
+                if (parts.length > 4) {
+                    const analysis = parts[4].trim();
+                    if (analysis) {
+                        combinedPlan += "[Analysis]\n" + analysis.replace(/^"|"$/g, '').replace(/""/g, '"') + "\n\n";
+                    }
+                }
+
+                // Term Out
+                if (parts.length > 6) {
+                    const termOut = parts[6].trim();
+                    if (termOut) {
+                        combinedPlan += "[Terminal Output]\n" + termOut.replace(/^"|"$/g, '').replace(/""/g, '"') + "\n\n";
+                    }
+                }
+
+                document.getElementById('original_plan').value = combinedPlan.trim();
+
+                // Competition ID (Col D / Index 3)
+                const compId = parts[3].trim();
+                if (compId) document.getElementById('competition_id').value = compId;
+
+                // Code (Col F / Index 5)
+                const code = parts[5]; // Don't trim code, whitespace matters
+                const cleanCode = code.replace(/^"|"$/g, '').replace(/""/g, '"');
+                if (cleanCode) document.getElementById('code').value = cleanCode;
+
+                // Debug Step (Col Q / Index 16)
+                // If not present, default to 0
+                if (parts.length > 16) {
+                    const step = parts[16].trim();
+                    if (/^\d+$/.test(step)) {
+                        document.getElementById('debug_step').value = step;
+                    } else {
+                        document.getElementById('debug_step').value = "0";
+                    }
+                } else {
+                    // Default to 0 if not copied
+                    document.getElementById('debug_step').value = "0";
+                }
+
+            } else {
+                // Fallback to heuristic if it doesn't look like the main sheet
+                console.warn("Row doesn't match expected schema (length < 6), trying heuristic...");
+
+                // ... (Keep simple fallback or just alert)
+                alert("Row format not recognized. Expected at least 6 columns (DatarowID, Email, Plan, CompID, Analysis, Code).");
+            }
+        }
+        function applyFix() {
+            const fixedCode = document.getElementById('res_code').innerText;
+            if (!fixedCode || fixedCode.startsWith("No fixed code")) {
+                alert("No fixed code to apply!");
+                return;
+            }
+
+            // Update code editor
+            document.getElementById('code').value = fixedCode;
+
+            // Update Original Plan with the Revised Plan for the next step
+            // NOTE: analysisData must be globally accessible for this to work.
+            if (typeof analysisData !== 'undefined' && analysisData && analysisData.revised_plan) {
+                const originalPlanField = document.getElementById('original_plan');
+                originalPlanField.value = `[Previous Step Plan]\n${analysisData.revised_plan}\n\n` + originalPlanField.value;
+                // Limit length to avoid explosion
+                if (originalPlanField.value.length > 2000) {
+                    originalPlanField.value = originalPlanField.value.substring(0, 2000) + "...";
+                }
+            }
+
+            // Increment debug step
+            const currentStep = parseInt(document.getElementById('debug_step').value) || 0;
+            const nextStep = currentStep + 1;
+            document.getElementById('debug_step').value = nextStep;
+
+            // 3. Visual Feedback
+            alert(`✓ Fix applied!\n\n1. Code updated\n2. Advanced to Debug Step ${nextStep}\n\nReview the code and click 'Run on GPU' to continue.`);
+
+            // 4. Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+
+</html>

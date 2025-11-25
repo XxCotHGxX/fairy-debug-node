@@ -1,0 +1,37 @@
+# Results and outputs
+results/*.jsonl
+results/*.json
+results/last_submission.json
+
+# Logs and analysis (generated during debugging)
+logs/
+analysis/
+submissions/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credentials
+.env
+# Credentials (keep config.yaml template, but ignore if it contains real tokens)
+# Uncomment if you want to ignore config.yaml with real credentials:
+# submissions/config.yaml
