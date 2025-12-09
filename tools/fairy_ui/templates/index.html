@@ -58,25 +58,21 @@
     </style>
 </head>
 
-<body class="p-8 min-h-screen">
-    <div class="max-w-7xl mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+<body class="p-4 h-screen overflow-hidden bg-[#0f172a]">
+    <div
+        class="w-full h-full max-w-[1900px] mx-auto bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 flex flex-col">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">🧚
                 Fairy Debugger</h1>
             <div class="flex items-center gap-4">
-                <select id="ai_provider"
-                    class="bg-gray-700 text-xs text-white rounded p-2 border border-gray-600 focus:border-purple-500 outline-none">
-                    <option value="local">🤖 Local (LM Studio)</option>
-                    <option value="gemini" selected>✨ Gemini 2.0 Flash</option>
-                </select>
                 <div id="statusBadge" class="px-3 py-1 rounded-full text-xs font-mono bg-gray-700 text-gray-400">Ready
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
             <!-- Left Col: Input -->
-            <div class="space-y-6">
+            <div class="space-y-4 flex flex-col h-full">
                 <!-- Paste Row Feature -->
                 <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Paste Row
@@ -113,28 +109,17 @@
                     </div>
                 </div>
 
-                <div>
+                <div class="flex-1 flex flex-col min-h-0">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Code</label>
-                    <textarea id="code" rows="12"
-                        class="w-full rounded-lg p-3 bg-gray-900 border border-gray-700 focus:border-purple-500 transition-colors font-mono text-xs leading-relaxed"
+                    <textarea id="code"
+                        class="w-full flex-1 rounded-lg p-3 bg-gray-900 border border-gray-700 focus:border-purple-500 transition-colors font-mono text-xs leading-relaxed resize-none"
                         spellcheck="false"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Original Plan /
-                        Analysis</label>
-                    <textarea id="original_plan" rows="4"
-                        class="w-full rounded-lg p-3 bg-gray-900 border border-gray-700 focus:border-purple-500 transition-colors text-sm"></textarea>
                 </div>
 
                 <div class="flex gap-4">
                     <button onclick="runSubmission()" id="runBtn"
                         class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all shadow-lg">
                         🚀 Run on GPU
-                    </button>
-                    <button onclick="analyzeOnly()" id="analyzeBtn"
-                        class="bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-500 transition-all shadow-lg text-xs flex items-center justify-center">
-                        🔍 Analyze Only
                     </button>
                     <button onclick="cancelSubmission()" id="cancelBtn" disabled
                         class="bg-red-900 text-red-200 font-bold py-3 px-6 rounded-lg hover:bg-red-800 transition-all opacity-50 disabled:cursor-not-allowed">
@@ -145,106 +130,55 @@
                         ✅ No Repro (>6m)
                     </button>
                 </div>
+
+                <!-- Generate Row Button -->
+                <div class="mt-8 pt-8 border-t border-gray-700">
+                    <h3 class="text-lg font-bold text-white mb-4">Spreadsheet Tools</h3>
+                    <button onclick="generateRow()" id="genRowBtn"
+                        class="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:from-green-700 hover:to-teal-700 transform hover:scale-[1.02] transition-all shadow-lg">
+                        📊 Generate Sheet Row
+                    </button>
+                </div>
             </div>
 
             <!-- Right Col: Output -->
-            <div class="space-y-6 flex flex-col">
+            <div class="space-y-4 flex flex-col h-full min-h-0">
                 <!-- Loader / Live Terminal -->
-                <div id="loader" class="hidden p-6 rounded-lg bg-gray-900 border border-purple-500/30 text-center">
-                    <div class="text-purple-400 font-mono animate-pulse mb-4 flex justify-between items-center">
+                <div id="loader"
+                    class="hidden flex-1 flex flex-col p-4 rounded-lg bg-gray-900 border border-purple-500/30 text-center min-h-0">
+                    <div
+                        class="text-purple-400 font-mono animate-pulse mb-4 flex justify-between items-center shrink-0">
                         <span>Processing...</span>
                         <span id="timer">0s</span>
                     </div>
 
-                    <div class="text-left">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Live Terminal
+                    <div class="text-left flex-1 flex flex-col min-h-0">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 shrink-0">Live Terminal
                             Output</label>
                         <pre id="live_terminal"
-                            class="bg-black text-gray-300 p-3 rounded border border-gray-800 text-[10px] font-mono h-64 overflow-y-auto scrollbar-thin whitespace-pre-wrap"></pre>
+                            class="bg-black text-gray-300 p-3 rounded border border-gray-800 text-[10px] font-mono flex-1 overflow-y-auto scrollbar-thin whitespace-pre-wrap"></pre>
                     </div>
                 </div>
 
-                <div id="results" class="hidden space-y-6 flex-1 overflow-y-auto">
-                    <!-- Verification Grid -->
-                    <div class="grid grid-cols-5 gap-4">
-                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
-                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">bug_confirmed</div>
-                            <div id="val_confirmed" class="text-xl font-mono font-bold text-blue-400">-</div>
-                        </div>
-                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
-                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">
-                                proposed_debug_analysis_accurate</div>
-                            <div id="val_accurate" class="text-xl font-mono font-bold text-purple-400">-</div>
-                        </div>
-                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
-                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">initial_bug_reproducible
-                            </div>
-                            <div id="val_repro" class="text-xl font-mono font-bold text-cyan-400">-</div>
-                        </div>
-                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
-                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">bug_fixed</div>
-                            <div id="val_fixed" class="text-xl font-mono font-bold text-green-400">-</div>
-                        </div>
-                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
-                            <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">all_bugs_fixed</div>
-                            <div id="val_all_fixed" class="text-xl font-mono font-bold text-yellow-400">-</div>
-                        </div>
+                <!-- Row Generation Results -->
+                <div id="row_results" class="hidden space-y-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Raw
+                            Tab-Separated String (Copy this)</label>
+                        <textarea id="raw_string_output" rows="4" readonly
+                            class="w-full rounded-lg p-3 bg-black border border-gray-600 font-mono text-xs text-green-400"></textarea>
+                        <button onclick="copyText('raw_string_output')"
+                            class="mt-2 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded text-xs transition-colors">
+                            📋 Copy to Clipboard
+                        </button>
                     </div>
 
-                    <!-- Analysis Accuracy Explanation -->
-                    <div class="relative group">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Analysis Accuracy
-                            Explanation</label>
-                        <div id="res_accuracy_explanation"
-                            class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-sans h-24 overflow-y-auto">
-                        </div>
-                    </div>
-
-                    <!-- Analysis Box -->
-                    <div class="relative group">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">revised_analysis</label>
-                        <div id="res_analysis"
-                            class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-sans h-48 overflow-y-auto">
-                        </div>
-                        <button onclick="copyText('res_analysis')"
-                            class="absolute top-0 right-0 mt-8 mr-2 opacity-0 group-hover:opacity-100 bg-gray-700 text-xs px-2 py-1 rounded text-white transition-opacity">Copy</button>
-                    </div>
-
-                    <!-- Plan Box -->
-                    <div class="relative group">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">revised_plan</label>
-                        <div id="res_plan"
-                            class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-sans h-48 overflow-y-auto">
-                        </div>
-                        <button onclick="copyText('res_plan')"
-                            class="absolute top-0 right-0 mt-8 mr-2 opacity-0 group-hover:opacity-100 bg-gray-700 text-xs px-2 py-1 rounded text-white transition-opacity">Copy</button>
-                    </div>
-
-                    <!-- Fixed Code Box -->
-                    <div class="relative group">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">current_debug_code</label>
-                        <pre id="res_code"
-                            class="bg-black text-green-400 p-4 rounded-lg border border-gray-700 text-xs font-mono overflow-x-auto h-64 scrollbar-thin whitespace-pre-wrap"></pre>
-                        <div
-                            class="absolute top-0 right-0 mt-8 mr-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="copyText('res_code')"
-                                class="bg-gray-700 text-xs px-2 py-1 rounded text-white hover:bg-gray-600">Copy</button>
-                            <button onclick="applyFix()"
-                                class="bg-purple-600 text-xs px-2 py-1 rounded text-white font-bold hover:bg-purple-500 shadow-lg">⚡
-                                Apply & Advance</button>
-                        </div>
-                    </div>
-
-                    <!-- Log Box -->
-                    <div class="relative group flex-1">
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 flex-1 flex flex-col min-h-0">
                         <label
-                            class="block text-xs font-bold text-gray-500 uppercase mb-2">output_logs_after_fix</label>
-                        <pre id="res_log"
-                            class="bg-black text-green-400 p-4 rounded-lg border border-gray-700 text-xs font-mono overflow-x-auto h-48 scrollbar-thin"></pre>
-                        <div
-                            class="absolute top-0 right-0 mt-8 mr-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="copyText('res_log')"
-                                class="bg-gray-700 text-xs px-2 py-1 rounded text-white transition-opacity">Copy</button>
+                            class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 shrink-0">Column
+                            Inspection</label>
+                        <div id="columns_container" class="space-y-4 overflow-y-auto flex-1 pr-2">
+                            <!-- Columns will be injected here -->
                         </div>
                     </div>
                 </div>
@@ -271,7 +205,7 @@
             }
 
             // Reset UI
-            document.getElementById('results').classList.add('hidden');
+            document.getElementById('row_results').classList.add('hidden');
             document.getElementById('loader').classList.remove('hidden');
             document.getElementById('runBtn').disabled = true;
             document.getElementById('runBtn').classList.add('opacity-50');
@@ -284,44 +218,141 @@
             startTimer();
 
             try {
-                await fetch('/api/run', {
+                const res = await fetch('/api/run', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
+
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`Server error (${res.status}): ${errText}`);
+                }
+
+                const json = await res.json();
+                if (json.status === 'error') {
+                    throw new Error(json.message);
+                }
 
                 updateStatus("GPU Running...", "bg-blue-600");
                 pollStatus(data.datarow_id, data.debug_step, data);
             } catch (e) {
-                alert("Error starting submission: " + e);
+                alert("Error starting submission: " + e.message);
                 resetUI();
             }
         }
 
-        async function analyzeOnly() {
+        async function generateRow() {
             const data = getFormData();
 
             // Reset UI
-            document.getElementById('results').classList.add('hidden');
+            document.getElementById('row_results').classList.add('hidden');
             document.getElementById('loader').classList.remove('hidden');
-            document.getElementById('live_terminal').innerText = "Starting analysis on existing logs...";
-            updateStatus("Analyzing...", "bg-purple-600");
+            document.getElementById('live_terminal').innerText = "Generating spreadsheet row...";
+            updateStatus("Generating Row...", "bg-teal-600");
             startTimer();
 
             try {
-                // Trigger Analysis directly
-                const anaRes = await fetch('/api/analyze', {
+                const res = await fetch('/api/generate_row', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                const anaJson = await anaRes.json();
+                const json = await res.json();
 
-                renderResults(anaJson);
+                stopTimer();
+                document.getElementById('loader').classList.add('hidden');
+
+                if (json.status === 'success') {
+                    renderRowResults(json);
+                    updateStatus("Row Generated", "bg-green-600");
+                } else {
+                    alert("Error: " + json.message);
+                    resetUI();
+                }
             } catch (e) {
-                alert("Error starting analysis: " + e);
+                alert("Error generating row: " + e);
                 resetUI();
             }
+        }
+
+        function renderRowResults(data) {
+            document.getElementById('row_results').classList.remove('hidden');
+            document.getElementById('raw_string_output').value = data.raw_string;
+
+            const container = document.getElementById('columns_container');
+            container.innerHTML = '';
+
+            // Define column order and labels (F through S)
+            const columns = [
+                { key: 'code', label: 'F: code' },
+                { key: '_term_out', label: 'G: _term_out' },
+                { key: 'exec_time', label: 'H: exec_time' },
+                { key: 'output_logs', label: 'I: output_logs' },
+                { key: 'bug_confirmed', label: 'J: bug_confirmed' },
+                { key: 'proposed_debug_analysis_accurate', label: 'K: proposed_debug_analysis_accurate' },
+                { key: 'initial_bug_reproducible', label: 'L: initial_bug_reproducible' },
+                { key: 'bug_fixed', label: 'M: bug_fixed' },
+                { key: 'all_bugs_fixed', label: 'N: all_bugs_fixed' },
+                { key: 'revised_analysis', label: 'O: revised_analysis' },
+                { key: 'revised_plan', label: 'P: revised_plan' },
+                { key: 'debug_step', label: 'Q: debug_step' },
+                { key: 'current_debug_code', label: 'R: current_debug_code' },
+                { key: 'output_logs_after_fix', label: 'S: output_logs_after_fix' }
+            ];
+
+            columns.forEach(col => {
+                const val = data.columns[col.key] || "";
+                const div = document.createElement('div');
+                div.className = "relative group";
+
+                let extraBtn = "";
+                // Add Apply button for the new code column
+                if (col.key === 'current_debug_code') {
+                    extraBtn = `<button onclick="applyCodeAndNext()" class="absolute top-0 right-0 mt-8 mr-16 opacity-0 group-hover:opacity-100 bg-purple-600 text-xs px-2 py-1 rounded text-white font-bold transition-opacity hover:bg-purple-500 shadow-lg">⚡ Apply & Next</button>`;
+                }
+
+                // Use a unique ID for each cell to allow copying
+                const cellId = `col_${col.key}`;
+
+                div.innerHTML = `
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">${col.label}</label>
+                    <div id="${cellId}" class="bg-black p-3 rounded border border-gray-800 text-xs font-mono text-gray-300 h-24 overflow-y-auto scrollbar-thin whitespace-pre-wrap break-all">${escapeHtml(val)}</div>
+                    <button onclick="copyText('${cellId}')" class="absolute top-0 right-0 mt-8 mr-2 opacity-0 group-hover:opacity-100 bg-gray-700 text-xs px-2 py-1 rounded text-white transition-opacity hover:bg-gray-600">Copy</button>
+                    ${extraBtn}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function applyCodeAndNext() {
+            const codeDiv = document.getElementById('col_current_debug_code');
+            if (!codeDiv) return;
+
+            const newCode = codeDiv.innerText; // innerText decodes HTML entities
+            if (!newCode) {
+                alert("No code to apply.");
+                return;
+            }
+
+            document.getElementById('code').value = newCode;
+
+            const stepInput = document.getElementById('debug_step');
+            let currentStep = parseInt(stepInput.value) || 0;
+            stepInput.value = currentStep + 1;
+
+            alert(`Code applied and step incremented to ${currentStep + 1}.`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         async function cancelSubmission() {
@@ -357,7 +388,7 @@
             if (!confirm("Mark as No Repro (>6m)?\n\nThis will:\n1. Cancel any running job (with remote confirmation).\n2. Verify job cancellation succeeded.\n3. Skip future runs for this file.\n4. Generate 'Pass' values.")) return;
 
             // Reset UI mainly to clear old results, but skip the full 'loader' flow since it's instant
-            document.getElementById('results').classList.add('hidden');
+            document.getElementById('row_results').classList.add('hidden');
             updateStatus("Marking No Repro...", "bg-green-600");
 
             try {
@@ -376,10 +407,7 @@
                     return;
                 }
 
-                // Render the canned results
-                renderResults(json);
-
-                document.getElementById('res_log').innerText = "N/A (Job skipped/No Repro)";
+                alert("Marked as No Repro. You can now generate the sheet row.");
                 updateStatus("No Repro Marked", "bg-green-600");
 
             } catch (e) {
@@ -394,8 +422,8 @@
                 datarow_id: document.getElementById('datarow_id').value,
                 debug_step: parseInt(document.getElementById('debug_step').value),
                 code: document.getElementById('code').value,
-                original_plan: document.getElementById('original_plan').value,
-                ai_provider: document.getElementById('ai_provider').value
+                original_plan: "", // Not used for row generation but kept for compatibility
+                proposed_analysis: window.currentAnalysis || "" // Pass the extracted analysis
             };
         }
 
@@ -417,132 +445,15 @@
 
                     if (json.status === 'completed') {
                         clearInterval(pollInterval);
-                        updateStatus("Analyzing (LM Studio)...", "bg-purple-600");
-
-                        // Clean log display
-                        document.getElementById('res_log').innerText = JSON.stringify(json.data, null, 2);
-
-                        // Trigger Analysis
-                        const anaRes = await fetch('/api/analyze', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(originalData)
-                        });
-                        const anaJson = await anaRes.json();
-
-                        renderResults(anaJson);
+                        updateStatus("Completed", "bg-green-600");
+                        resetBtn();
+                        document.getElementById('loader').classList.add('hidden');
+                        alert("Run completed! You can now generate the sheet row.");
                     }
                 } catch (e) {
                     console.error("Polling error", e);
                 }
             }, 2000);
-        }
-
-        async function renderResults(analysisData) {
-            stopTimer();
-            document.getElementById('loader').classList.add('hidden');
-
-            if (analysisData.status === 'error') {
-                alert("❌ Analysis Failed:\n\n" + analysisData.message);
-                updateStatus("Analysis Failed", "bg-red-600");
-                return;
-            }
-
-            document.getElementById('results').classList.remove('hidden');
-            updateStatus("Complete", "bg-green-600");
-            resetBtn();
-
-            // Load fixed code from analysis response (file is NOT created until user clicks "Run")
-            const competition_id = document.getElementById('competition_id').value;
-            const datarow_id = document.getElementById('datarow_id').value;
-            const debug_step = parseInt(document.getElementById('debug_step').value);
-            const next_step = debug_step + 1;
-
-            // Get fixed code from analysis JSON response
-            let fixedCode = null;
-            if (analysisData.analysis) {
-                let raw = analysisData.analysis;
-                // Clean markdown
-                raw = raw.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-
-                // Method 1: Strict JSON parsing
-                try {
-                    const jsonStart = raw.indexOf('{');
-                    const jsonEnd = raw.lastIndexOf('}') + 1;
-                    if (jsonStart !== -1 && jsonEnd > jsonStart) {
-                        const parsed = JSON.parse(raw.substring(jsonStart, jsonEnd));
-                        if (parsed.fixed_code) {
-                            fixedCode = parsed.fixed_code;
-                        }
-                    }
-                } catch (e) {
-                    console.warn("Failed to parse fixed_code from analysis JSON", e);
-                }
-
-                // Method 2: Dirty extraction (if truncated/invalid JSON)
-                if (!fixedCode) {
-                    // Look for "fixed_code": "..." pattern
-                    const match = raw.match(/"fixed_code"\s*:\s*"([\s\S]*)/);
-                    if (match) {
-                        console.log("Attempting dirty extraction of fixed_code...");
-                        let content = match[1];
-
-                        // Try to find the end quote if it exists (and followed by , or } or whitespace)
-                        // This is hard because code can contain escaped quotes.
-                        // Assuming truncation implies we take everything until the end of string
-
-                        // Manually unescape JSON string
-                        // 1. Handle \\ -> \ (placeholder)
-                        // 2. Handle \" -> "
-                        // 3. Handle \n -> newline
-                        try {
-                            content = content.replace(/\\n/g, '\n')
-                                .replace(/\\"/g, '"')
-                                .replace(/\\\\/g, '\\')
-                                .replace(/\\t/g, '\t');
-
-                            fixedCode = content + "\n\n# [WARNING: Output was truncated/incomplete]";
-                        } catch (e) {
-                            console.warn("Dirty extraction unescape failed", e);
-                        }
-                    }
-                }
-            }
-
-            document.getElementById('res_code').innerText = fixedCode || "No fixed code generated yet";
-
-            if (analysisData.analysis) {
-                let raw = analysisData.analysis;
-
-                document.getElementById('res_analysis').innerText = raw;
-                document.getElementById('res_plan').innerText = "Check Analysis box above (Raw Output)";
-
-                try {
-                    // Remove markdown code blocks if present
-                    raw = raw.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-
-                    // Find JSON object
-                    const jsonStart = raw.indexOf('{');
-                    const jsonEnd = raw.lastIndexOf('}');
-                    if (jsonStart !== -1 && jsonEnd !== -1) {
-                        const jsonStr = raw.substring(jsonStart, jsonEnd + 1);
-                        const parsed = JSON.parse(jsonStr);
-
-                        document.getElementById('res_analysis').innerText = parsed.revised_analysis || "";
-                        document.getElementById('res_plan').innerText = parsed.revised_plan || "";
-
-                        // Populate all verification fields - use explicit checks to avoid "-" for missing values
-                        document.getElementById('val_accurate').innerText = parsed.proposed_debug_analysis_accurate !== undefined ? parsed.proposed_debug_analysis_accurate : "-";
-                        document.getElementById('val_confirmed').innerText = parsed.bug_confirmed !== undefined ? (parsed.bug_confirmed ? "TRUE" : "FALSE") : "-";
-                        document.getElementById('val_fixed').innerText = parsed.bug_fixed !== undefined ? (parsed.bug_fixed ? "TRUE" : "FALSE") : "-";
-                        document.getElementById('val_repro').innerText = parsed.initial_bug_reproducible !== undefined ? (parsed.initial_bug_reproducible ? "TRUE" : "FALSE") : "-";
-                        document.getElementById('val_all_fixed').innerText = parsed.all_bugs_fixed !== undefined ? (parsed.all_bugs_fixed ? "TRUE" : "FALSE") : "-";
-                        document.getElementById('res_accuracy_explanation').innerText = parsed.analysis_accuracy_explanation || "N/A";
-                    }
-                } catch (e) {
-                    console.warn("Failed to parse Gemini JSON", e);
-                }
-            }
         }
 
         function updateStatus(text, colorClass) {
@@ -579,7 +490,7 @@
         }
 
         function copyText(id) {
-            const text = document.getElementById(id).innerText;
+            const text = document.getElementById(id).value || document.getElementById(id).innerText;
             navigator.clipboard.writeText(text);
             const el = document.getElementById(id).parentElement;
             const originalBg = el.style.backgroundColor;
@@ -594,53 +505,24 @@
             // Split by tab
             const parts = raw.split('\t');
 
-            // Mapping based on user provided sheet screenshot:
-            // Index 0 (Col A): datarow_id
-            // Index 1 (Col B): Aligner Email
-            // Index 2 (Col C): original_plan
-            // Index 3 (Col D): competition_id
-            // Index 4 (Col E): analysis
-            // Index 5 (Col F): code
-            // ...
-            // Index 16 (Col Q): debug_step (might be missing if user didn't copy that far)
-
             if (parts.length >= 6) {
-                // We have at least up to Code
-
                 // Datarow ID (Col A / Index 0)
                 const datarowId = parts[0].trim();
                 if (datarowId) document.getElementById('datarow_id').value = datarowId;
 
-                // Original Plan (Col C / Index 2) + Analysis (Col E / Index 4) + Term Out (Col G / Index 6)
-                let combinedPlan = "";
-
-                // Original Plan
-                const plan = parts[2].trim();
-                if (plan) {
-                    combinedPlan += "[Original Plan]\n" + plan.replace(/^"|"$/g, '').replace(/""/g, '"') + "\n\n";
-                }
-
-                // Analysis
-                if (parts.length > 4) {
-                    const analysis = parts[4].trim();
-                    if (analysis) {
-                        combinedPlan += "[Analysis]\n" + analysis.replace(/^"|"$/g, '').replace(/""/g, '"') + "\n\n";
-                    }
-                }
-
-                // Term Out
-                if (parts.length > 6) {
-                    const termOut = parts[6].trim();
-                    if (termOut) {
-                        combinedPlan += "[Terminal Output]\n" + termOut.replace(/^"|"$/g, '').replace(/""/g, '"') + "\n\n";
-                    }
-                }
-
-                document.getElementById('original_plan').value = combinedPlan.trim();
-
                 // Competition ID (Col D / Index 3)
                 const compId = parts[3].trim();
                 if (compId) document.getElementById('competition_id').value = compId;
+
+                // Analysis (Col E / Index 4)
+                // We need to store this somewhere to pass it to the generation script
+                if (parts.length > 4) {
+                    const analysis = parts[4];
+                    const cleanAnalysis = analysis.replace(/^"|"$/g, '').replace(/""/g, '"');
+                    // Store in a global variable or hidden input
+                    window.currentAnalysis = cleanAnalysis;
+                    console.log("Extracted Analysis:", cleanAnalysis.substring(0, 50) + "...");
+                }
 
                 // Code (Col F / Index 5)
                 const code = parts[5]; // Don't trim code, whitespace matters
@@ -648,7 +530,6 @@
                 if (cleanCode) document.getElementById('code').value = cleanCode;
 
                 // Debug Step (Col Q / Index 16)
-                // If not present, default to 0
                 if (parts.length > 16) {
                     const step = parts[16].trim();
                     if (/^\d+$/.test(step)) {
@@ -657,49 +538,12 @@
                         document.getElementById('debug_step').value = "0";
                     }
                 } else {
-                    // Default to 0 if not copied
                     document.getElementById('debug_step').value = "0";
                 }
 
             } else {
-                // Fallback to heuristic if it doesn't look like the main sheet
-                console.warn("Row doesn't match expected schema (length < 6), trying heuristic...");
-
-                // ... (Keep simple fallback or just alert)
-                alert("Row format not recognized. Expected at least 6 columns (DatarowID, Email, Plan, CompID, Analysis, Code).");
+                alert("Row format not recognized. Expected at least 6 columns.");
             }
-        }
-        function applyFix() {
-            const fixedCode = document.getElementById('res_code').innerText;
-            if (!fixedCode || fixedCode.startsWith("No fixed code")) {
-                alert("No fixed code to apply!");
-                return;
-            }
-
-            // Update code editor
-            document.getElementById('code').value = fixedCode;
-
-            // Update Original Plan with the Revised Plan for the next step
-            // NOTE: analysisData must be globally accessible for this to work.
-            if (typeof analysisData !== 'undefined' && analysisData && analysisData.revised_plan) {
-                const originalPlanField = document.getElementById('original_plan');
-                originalPlanField.value = `[Previous Step Plan]\n${analysisData.revised_plan}\n\n` + originalPlanField.value;
-                // Limit length to avoid explosion
-                if (originalPlanField.value.length > 2000) {
-                    originalPlanField.value = originalPlanField.value.substring(0, 2000) + "...";
-                }
-            }
-
-            // Increment debug step
-            const currentStep = parseInt(document.getElementById('debug_step').value) || 0;
-            const nextStep = currentStep + 1;
-            document.getElementById('debug_step').value = nextStep;
-
-            // 3. Visual Feedback
-            alert(`✓ Fix applied!\n\n1. Code updated\n2. Advanced to Debug Step ${nextStep}\n\nReview the code and click 'Run on GPU' to continue.`);
-
-            // 4. Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
